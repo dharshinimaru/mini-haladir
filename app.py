@@ -21,6 +21,12 @@ state = {
 
 
 def make_decision(state):
+    if not state["inventory_available"]:
+        return "WAIT - INVENTORY NOT AVAILABLE"
+
+    if not state["picker_available"]:
+        return "WAIT - NO PICKER AVAILABLE"
+
     if state["priority"] == "high" and state["truck_leaves_in_min"] < 30:
         if not state["dock_available"]:
             return "MOVE TO ANOTHER DOCK"
@@ -48,8 +54,15 @@ st.subheader("Recommendation")
 st.write(decision)
 
 if st.button("Approve"):
-    requests.post(f"{BASE_URL}/wms/move-dock")
-    requests.post(f"{BASE_URL}/oms/ready-to-ship")
+    if decision == "MOVE TO ANOTHER DOCK":
+        requests.post(f"{BASE_URL}/wms/move-dock")
+        st.success("Order moved to an available dock")
 
-    st.success("Decision executed")
+    elif decision == "SHIP NOW":
+        requests.post(f"{BASE_URL}/oms/ready-to-ship")
+        st.success("Order marked ready to ship")
+
+    else:
+        st.info("No action executed")
+
     st.rerun()
